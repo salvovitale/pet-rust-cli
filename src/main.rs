@@ -62,8 +62,12 @@ impl From<MenuItem> for usize {
 }
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
+
+    // Set the terminal to raw (or noncanonical) mode,
+    // which eliminates the need to wait for an Enter by the user to react to the input.
     enable_raw_mode().expect("can run in raw mode");
 
+    // Set up an input loop using TUI and Crossterm
     let (tx, rx) = mpsc::channel();
     let tick_rate = Duration::from_millis(200);
     thread::spawn(move || {
@@ -87,16 +91,22 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         }
     });
 
+    // Set up Tui with Crossterm backend
+    //We defined a CrosstermBackend using stdout and used it in a TUI Terminal,
+    // clearing it initially and implicitly checking that everything works.
+    //If any of this fails, we simply panic and the application stops;
     let stdout = io::stdout();
     let backend = CrosstermBackend::new(stdout);
     let mut terminal = Terminal::new(backend)?;
     terminal.clear()?;
+
 
     let menu_titles = vec!["Home", "Pets", "Add", "Delete", "Quit"];
     let mut active_menu_item = MenuItem::Home;
     let mut pet_list_state = ListState::default();
     pet_list_state.select(Some(0));
 
+    //render loop, which calls terminal.draw() on every iteration.
     loop {
         terminal.draw(|rect| {
             let size = rect.size();
